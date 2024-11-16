@@ -2,9 +2,7 @@ package com.yupi.yuoj.common;
 
 /**
  * 返回工具类
- *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ *使用该工具类封装状态码，数据给前端
  */
 public class ResultUtils {
 

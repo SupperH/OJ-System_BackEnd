@@ -1,5 +1,6 @@
 package com.yupi.yuoj.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
 import com.yupi.yuoj.annotation.AuthCheck;
@@ -43,7 +44,7 @@ public class QuestionController {
     // region 增删改查
 
     /**
-     * 创建
+     * 新建题目
      *
      * @param questionAddRequest
      * @param request
@@ -63,27 +64,28 @@ public class QuestionController {
         if (tags != null) {
             question.setTags(GSON.toJson(tags));
         }
-
         List<JudgeCase> judgeCase = questionAddRequest.getJudgeCase();
         if(judgeCase!=null){
             question.setJudgeCase(GSON.toJson(judgeCase));
         }
-
         JudgeConfig judgeConfig = questionAddRequest.getJudgeConfig();
         if(judgeConfig!=null){
             question.setJudgeConfig(GSON.toJson(judgeConfig));
         }
 
-        //先验证参数是否合法
+        //先验证参数是否合法如果不合法直接抛错
         questionService.validQuestion(question, true);
         //然后才是获取登录信息并且保存
         User loginUser = userService.getLoginUser(request);
         question.setUserId(loginUser.getId());
         question.setFavourNum(0);
         question.setThumbNum(0);
+        //保存，mybatisplus方法
         boolean result = questionService.save(question);
+        //调用公用方法，如果保存失败就抛错
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         long newQuestionId = question.getId();
+        //封装结果返回给前端
         return ResultUtils.success(newQuestionId);
     }
 
@@ -119,6 +121,7 @@ public class QuestionController {
      * @return
      */
     @PostMapping("/update")
+    //校验是否为管理员
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> updateQuestion(@RequestBody QuestionUpdateRequest questionUpdateRequest) {
         if (questionUpdateRequest == null || questionUpdateRequest.getId() <= 0) {
@@ -126,16 +129,15 @@ public class QuestionController {
         }
         Question question = new Question();
         BeanUtils.copyProperties(questionUpdateRequest, question);
+        //把前端传过来的参数和后端实体类不一致的参数进行类型转换
         List<String> tags = questionUpdateRequest.getTags();
         if (tags != null) {
             question.setTags(GSON.toJson(tags));
         }
-
         List<JudgeCase> judgeCase = questionUpdateRequest.getJudgeCase();
         if(judgeCase!=null){
             question.setJudgeCase(GSON.toJson(judgeCase));
         }
-
         JudgeConfig judgeConfig = questionUpdateRequest.getJudgeConfig();
         if(judgeConfig!=null){
             question.setJudgeConfig(GSON.toJson(judgeConfig));
@@ -183,8 +185,13 @@ public class QuestionController {
         long size = questionQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        Page<Question> questionPage = questionService.page(new Page<>(current, size),
-                questionService.getQueryWrapper(questionQueryRequest));
+
+        /*page是mybatisplus的分页方法*/
+        //拿到查询的拼接条件然后使用page进行分页查询
+        QueryWrapper<Question> queryWrapper = questionService.getQueryWrapper(questionQueryRequest);
+        Page<Question> questionPage = questionService.page(new Page<>(current, size),queryWrapper);
+
+        //调用service方法返回给前端分页数据
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
     }
 
@@ -208,7 +215,7 @@ public class QuestionController {
 
     /**
      * 分页获取当前用户创建的资源列表
-     *
+     *和listQuestionVOByPage的区别就是这个方法加了个userid的条件过滤 只查询出当前登陆人创建的题目
      * @param questionQueryRequest
      * @param request
      * @return
@@ -219,12 +226,17 @@ public class QuestionController {
         if (questionQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+
+        //只查询当前登录人的创建的题目列表
         User loginUser = userService.getLoginUser(request);
         questionQueryRequest.setUserId(loginUser.getId());
+
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
+
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+
         Page<Question> questionPage = questionService.page(new Page<>(current, size),
                 questionService.getQueryWrapper(questionQueryRequest));
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));

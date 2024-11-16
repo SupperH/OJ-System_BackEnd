@@ -92,7 +92,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
 
     /**
      * 获取查询包装类（用户根据哪些字段查询，根据前端传来的请求对象，得到mybatis支持的查询QueryWrapper类）
-     *
+     *未脱敏
      * @param questionQueryRequest
      * @return
      */
@@ -103,6 +103,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
             return queryWrapper;
         }
 
+        /*分页查询时前端传来的查询参数 这些参数不会一股脑的进行拼接，而是有condition条件判断的*/
         Long id = questionQueryRequest.getId();
         String title = questionQueryRequest.getTitle();
         String content = questionQueryRequest.getContent();
@@ -113,23 +114,24 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         String sortField = questionQueryRequest.getSortField();
         String sortOrder = questionQueryRequest.getSortOrder();
 
-        /*拼接sql查询条件 mybatisplus*/
+        /*拼接sql查询条件 同时只有不为空的时候才拼接 mybatisplus*/
         queryWrapper.like(StringUtils.isNotBlank(title), "title", title);
         queryWrapper.like(StringUtils.isNotBlank(content), "content", content);
         queryWrapper.like(StringUtils.isNotBlank(answer), "answer", answer);
 
-        //如果用户传入了标签，因为tag是list有多个标签项所以这里循环获取每个标签并且拼接
+        //如果用户传入了标签，因为前端传来的tag是list有多个标签项所以这里循环获取每个标签并且拼接 模糊查询like
         if (CollectionUtils.isNotEmpty(tags)) {
             for (String tag : tags) {
                 queryWrapper.like("tags", "\"" + tag + "\"");
             }
         }
+        //eq是sql中的=号
         queryWrapper.eq(ObjectUtils.isNotEmpty(id), "id", id);
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
 
         //只查询未删除的数据
         queryWrapper.eq("isDelete", false);
-        //分页参数拼接
+        //排序方式拼接
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
@@ -140,7 +142,6 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     @Override
     public QuestionVO getQuestionVO(Question question, HttpServletRequest request) {
         QuestionVO questionVO = QuestionVO.objToVo(question);
-        long questionId = question.getId();
         // 1. 关联查询用户信息 查询题目创建人信息
         Long userId = question.getUserId();
         User user = null;
@@ -156,11 +157,13 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     //根据问题得到问题分页的包装类
     @Override
     public Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request) {
+        //获取数据
         List<Question> questionList = questionPage.getRecords();
         Page<QuestionVO> questionVOPage = new Page<>(questionPage.getCurrent(), questionPage.getSize(), questionPage.getTotal());
         if (CollectionUtils.isEmpty(questionList)) {
             return questionVOPage;
         }
+
         // 1. 关联查询用户信息
         Set<Long> userIdSet = questionList.stream().map(Question::getUserId).collect(Collectors.toSet());
         Map<Long, List<User>> userIdUserListMap = userService.listByIds(userIdSet).stream()
@@ -168,6 +171,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
 
         // 填充信息  循环填充信息
         List<QuestionVO> questionVOList = questionList.stream().map(question -> {
+            // 对象转包装类 因为实体类和返回给前端的数据有的类型会不一样所以需要进行这个转换
             QuestionVO questionVO = QuestionVO.objToVo(question);
             Long userId = question.getUserId();
             User user = null;

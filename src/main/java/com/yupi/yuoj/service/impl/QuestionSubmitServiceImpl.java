@@ -73,7 +73,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         //获取用户id
         long userId = loginUser.getId();
 
-        // 提交题目
+        // 设置提交题目的数据 并且进行保存
         QuestionSubmit questionSubmit = new QuestionSubmit();
         questionSubmit.setUserId(userId);
         questionSubmit.setQuestionId(questionId);
@@ -89,11 +89,13 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         if(!save){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"数据库插入失败");
         }
+        //返回插入数据的id
         return questionSubmit.getId();
     }
 
     /**
      * 获取查询包装类（用户根据哪些字段查询，根据前端传来的请求对象，得到mybatis支持的查询QueryWrapper类）
+     * 未脱敏
      *
      * @param questionSubmitQueryRequest
      * @return
@@ -151,9 +153,11 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
             return questionSubmitVOPage;
         }
 
-        /*其实就是for循环list每次调用getQuestionSubmitVO方法，获取对象而已*/
+        /*其实就是for循环list每次调用getQuestionSubmitVO方法获取当前登录用户的权限而已*/
         List<QuestionSubmitVO> questionSubmitVOList = questionSubmitList.stream().map(questionSubmit ->
                 getQuestionSubmitVO(questionSubmit, loginUser)).collect(Collectors.toList());
+
+        //page分页插件的数据放在records记录上
         questionSubmitVOPage.setRecords(questionSubmitVOList);
         return questionSubmitVOPage;
     }
