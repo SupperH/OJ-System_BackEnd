@@ -1,19 +1,13 @@
 package com.yupi.yuoj.model.vo;
 
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.yupi.yuoj.model.dto.question.JudgeConfig;
-import com.yupi.yuoj.model.dto.questionsubmit.JudgeInfo;
-import com.yupi.yuoj.model.entity.Question;
+import com.yupi.yuoj.judge.codesandbox.model.JudgeInfo;
 import com.yupi.yuoj.model.entity.QuestionSubmit;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 /**
  * 题目提交返回给前端的封装类  题目封装类  因为实体类有的属性不应该返回给前端，所以额外定义一个存放需要返回给前端的属性的实体类 过滤字段脱敏
