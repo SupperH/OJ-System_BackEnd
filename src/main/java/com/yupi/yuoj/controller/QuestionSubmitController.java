@@ -28,53 +28,54 @@ import javax.servlet.http.HttpServletRequest;
  *
  */
 @RestController
-@RequestMapping("/question_submit")
+//@RequestMapping("/question_submit")
 @Slf4j
+@Deprecated //说明方法过时
 public class QuestionSubmitController {
 
-    @Resource
-    private QuestionSubmitService questionSubmitService;
-
-    @Resource
-    private UserService userService;
-
-    /**
-     * 提交题目
-     *
-     * @param questionSubmitAddRequest
-     * @param request
-     * @return 提交记录的id
-     */
-    @PostMapping("/")
-    public BaseResponse<Long> doQuestionSubmit(@RequestBody QuestionSubmitAddRequest questionSubmitAddRequest,
-            HttpServletRequest request) {
-        //先校验提交的题目id是否为空
-        if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        // 获取登录用户
-        final User loginUser = userService.getLoginUser(request);
-        long questionSubmitId = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
-        return ResultUtils.success(questionSubmitId);
-    }
-
-
-    /*分页获取题目提交列表，除了管理员外，普通用户只能看到非答案，提交代码等公开信息*/
-    @PostMapping("list/page")
-    public BaseResponse<Page<QuestionSubmitVO>> listQuestionByPage(@RequestBody QuestionSubmitQueryRequest questionSubmitQueryRequest,
-                                                                   HttpServletRequest request){
-        long current = questionSubmitQueryRequest.getCurrent();
-        long pageSize = questionSubmitQueryRequest.getPageSize();
-
-        //mybatisplus分页查询方法 指定当前页，页数，数据进行查询
-        /*得到了原始的分页信息，还需要进行脱敏*/
-        Page<QuestionSubmit> questionSubmitPage = questionSubmitService.page(new Page<>(current, pageSize),
-                questionSubmitService.getQueryWrapper(questionSubmitQueryRequest));
-        //获取登录信息
-        final User loginUser = userService.getLoginUser(request);
-        // 脱敏，公共封装返回类方法 把状态码，数据封装返回给前端解析
-        return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionSubmitPage,loginUser));
-
-    }
+//    @Resource
+//    private QuestionSubmitService questionSubmitService;
+//
+//    @Resource
+//    private UserService userService;
+//
+//    /**
+//     * 提交题目
+//     *
+//     * @param questionSubmitAddRequest
+//     * @param request
+//     * @return 提交记录的id
+//     */
+//    @PostMapping("/")
+//    public BaseResponse<Long> doQuestionSubmit(@RequestBody QuestionSubmitAddRequest questionSubmitAddRequest,
+//            HttpServletRequest request) {
+//        //先校验提交的题目id是否为空
+//        if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
+//            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+//        }
+//        // 获取登录用户
+//        final User loginUser = userService.getLoginUser(request);
+//        long questionSubmitId = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
+//        return ResultUtils.success(questionSubmitId);
+//    }
+//
+//
+//    /*分页获取题目提交列表，除了管理员外，普通用户只能看到非答案，提交代码等公开信息*/
+//    @PostMapping("list/page")
+//    public BaseResponse<Page<QuestionSubmitVO>> listQuestionByPage(@RequestBody QuestionSubmitQueryRequest questionSubmitQueryRequest,
+//                                                                   HttpServletRequest request){
+//        long current = questionSubmitQueryRequest.getCurrent();
+//        long pageSize = questionSubmitQueryRequest.getPageSize();
+//
+//        //mybatisplus分页查询方法 指定当前页，页数，数据进行查询
+//        /*得到了原始的分页信息，还需要进行脱敏*/
+//        Page<QuestionSubmit> questionSubmitPage = questionSubmitService.page(new Page<>(current, pageSize),
+//                questionSubmitService.getQueryWrapper(questionSubmitQueryRequest));
+//        //获取登录信息
+//        final User loginUser = userService.getLoginUser(request);
+//        // 脱敏，公共封装返回类方法 把状态码，数据封装返回给前端解析
+//        return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionSubmitPage,loginUser));
+//
+//    }
 
 }

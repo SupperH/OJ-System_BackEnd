@@ -196,3 +196,37 @@ PUT post_v1
 确保代码沙箱要接收和输出一组运行用例，因为如果每个用例单独调用一次代码沙箱，会调用多次接口，需要多次网络传输，程序要多次编译，记录程序执行状态（重复的代码不重复编译）
 这是一种很常见的性能优化方法（批处理）
 
+## 代码沙箱模块在本仓库的OJ_System_CodeSandBox
+
+接下来跑通整个项目流程
+
+## 微服务改造：
+放开application.yml的redis配置，修改session存储方式： store-type: redis
+确定pom中有redis的依赖，springsession-redis和springboot-redis
+主类取消移除redis的配置
+
+注意redis的数据库是哪个 在配置文件中的 database：1 这里使用的是1数据库 所以可以在redis使用select 1切换数据库
+
+做完这些 分布式登录就改造好了其实
+
+### 微服务划分
+用户模块8102
+题目模块8103
+判题模块8104
+公共服务：
+ common：全局异常处理器，请求响应封装类，工具类等
+ model： 很多服务的公用实体类
+ 公用接口模块 ： 只存放接口，不存放是西安（多个服务之间要共享）
+依赖服务：
+ 注册中心：Nacos
+ 微服务网关：Gateway 聚合所有的接口，统一接收前端的请求
+
+代码沙箱服务独立，不纳入springcloud管理
+
+路由划分
+springboot的context-path统一修改项目接口前缀，比如：
+/api/user
+/api/user/inner(内部调用，网管层面做限制)
+........
+
+

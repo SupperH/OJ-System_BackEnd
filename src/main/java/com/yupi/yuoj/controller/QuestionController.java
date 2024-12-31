@@ -12,10 +12,15 @@ import com.yupi.yuoj.constant.UserConstant;
 import com.yupi.yuoj.exception.BusinessException;
 import com.yupi.yuoj.exception.ThrowUtils;
 import com.yupi.yuoj.model.dto.question.*;
+import com.yupi.yuoj.model.dto.questionsubmit.QuestionSubmitAddRequest;
+import com.yupi.yuoj.model.dto.questionsubmit.QuestionSubmitQueryRequest;
 import com.yupi.yuoj.model.entity.Question;
+import com.yupi.yuoj.model.entity.QuestionSubmit;
 import com.yupi.yuoj.model.entity.User;
+import com.yupi.yuoj.model.vo.QuestionSubmitVO;
 import com.yupi.yuoj.model.vo.QuestionVO;
 import com.yupi.yuoj.service.QuestionService;
+import com.yupi.yuoj.service.QuestionSubmitService;
 import com.yupi.yuoj.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -38,6 +43,10 @@ public class QuestionController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private QuestionSubmitService questionSubmitService;
+
 
     private final static Gson GSON = new Gson();
 
@@ -310,6 +319,46 @@ public class QuestionController {
         }
         boolean result = questionService.updateById(question);
         return ResultUtils.success(result);
+    }
+
+
+    /**
+     * 提交题目
+     *
+     * @param questionSubmitAddRequest
+     * @param request
+     * @return 提交记录的id
+     */
+    @PostMapping("/question_submit/do")
+    public BaseResponse<Long> doQuestionSubmit(@RequestBody QuestionSubmitAddRequest questionSubmitAddRequest,
+                                               HttpServletRequest request) {
+        //先校验提交的题目id是否为空
+        if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 获取登录用户
+        final User loginUser = userService.getLoginUser(request);
+        long questionSubmitId = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
+        return ResultUtils.success(questionSubmitId);
+    }
+
+
+    /*分页获取题目提交列表，除了管理员外，普通用户只能看到非答案，提交代码等公开信息*/
+    @PostMapping("/question_submit/list/page")
+    public BaseResponse<Page<QuestionSubmitVO>> listQuestionSubmitByPage(@RequestBody QuestionSubmitQueryRequest questionSubmitQueryRequest,
+                                                                         HttpServletRequest request){
+        long current = questionSubmitQueryRequest.getCurrent();
+        long pageSize = questionSubmitQueryRequest.getPageSize();
+
+        //mybatisplus分页查询方法 指定当前页，页数，数据进行查询
+        /*得到了原始的分页信息，还需要进行脱敏*/
+        Page<QuestionSubmit> questionSubmitPage = questionSubmitService.page(new Page<>(current, pageSize),
+                questionSubmitService.getQueryWrapper(questionSubmitQueryRequest));
+        //获取登录信息
+        final User loginUser = userService.getLoginUser(request);
+        // 脱敏，公共封装返回类方法 把状态码，数据封装返回给前端解析
+        return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionSubmitPage,loginUser));
+
     }
 
 }

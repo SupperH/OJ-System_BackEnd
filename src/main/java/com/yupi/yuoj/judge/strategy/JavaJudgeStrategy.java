@@ -8,6 +8,7 @@ import com.yupi.yuoj.model.entity.Question;
 import com.yupi.yuoj.model.enums.JudgeMessageEnum;
 
 import java.util.List;
+import java.util.Optional;
 
 //java判题策略
 public class JavaJudgeStrategy implements JudgeStrategy {
@@ -24,8 +25,9 @@ public class JavaJudgeStrategy implements JudgeStrategy {
         List<JudgeCase> judgeCasesList = judgeContext.getJudgeCasesList();
 
         //判断题目限制
-        Long memory = judgeInfo.getMemory();
-        Long time = judgeInfo.getTime();
+        /*这里前端传来的可能是null，所以这里判断如果没有设置题目的内存和时间就直接为0*/
+        Long memory = Optional.ofNullable(judgeInfo.getMemory()).orElse(0L);
+        Long time = Optional.ofNullable(judgeInfo.getTime()).orElse(0L);
 
         JudgeInfo judgeInfoResponse = new JudgeInfo();
         judgeInfoResponse.setMemory(memory);
