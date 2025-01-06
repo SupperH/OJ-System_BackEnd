@@ -230,3 +230,11 @@ springboot的context-path统一修改项目接口前缀，比如：
 ........
 
 
+## Nacos注册中心
+使用2.2.0版本， 进入bin目录启动 startup.cmd -m standalone
+
+springcloud有相当多的依赖，不建议随意找一套配置使用
+使用云原生脚手架 https://start.aliyun.com/
+
+创建需要的module然后确定好父子关系，然后一个个把服务的代码都复制过来 这是第一步
+注意实际功能服务的yml文件中端口配置和module名配置不一样
